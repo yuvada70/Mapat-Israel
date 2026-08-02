@@ -1,0 +1,15 @@
+{
+  "name": "מפת ישראל — משחק ניחוש מיקומים",
+  "short_name": "מפת ישראל",
+  "description": "משחק קבוצתי שבו מנחשים מיקומים של ערים ואתרים על מפת ישראל.",
+  "lang": "he",
+  "dir": "rtl",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#070c17",
+  "theme_color": "#070c17",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

@@ -1,0 +1,138 @@
+.page {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+  max-width: 760px;
+  min-height: 0;
+  padding: calc(var(--space-3) + var(--safe-top)) var(--space-4) calc(var(--space-3) + var(--safe-bottom));
+  margin-inline: auto;
+}
+
+/* ── כותרת ─────────────────────────────────────────────────── */
+
+.header {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.headerSide {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.headerEnd {
+  align-items: flex-end;
+}
+
+.headerSpacer {
+  width: 62px;
+  height: 62px;
+}
+
+.roundLabel {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--color-text-muted);
+}
+
+.roundTotal {
+  color: var(--color-text-subtle);
+}
+
+.score {
+  font-size: var(--text-xl);
+  font-weight: 900;
+  line-height: 1;
+  color: var(--color-primary);
+}
+
+.scoreLabel {
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  color: var(--color-text-subtle);
+}
+
+.rank {
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  color: var(--color-accent);
+}
+
+/* ── שאלה ──────────────────────────────────────────────────── */
+
+.prompt {
+  font-size: var(--text-3xl);
+  line-height: 1.1;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.promptMuted {
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: var(--color-text-subtle);
+}
+
+/* ── מפה ───────────────────────────────────────────────────── */
+
+.mapArea {
+  position: relative;
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+}
+
+.mapVeil {
+  position: absolute;
+  inset: 0;
+  background: rgb(7 12 23 / 55%);
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(2px);
+}
+
+/* ── כותרת תחתונה ──────────────────────────────────────────── */
+
+.footer {
+  display: flex;
+  justify-content: center;
+  min-height: 42px;
+  /* שומר מרווח מכפתורי ההעדפות שבפינות התחתונות. */
+  padding-inline: 46px;
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  padding: var(--space-2) var(--space-5);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--color-text-muted);
+  text-align: center;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+}
+
+.statusOk {
+  color: var(--color-primary);
+  background: var(--color-primary-soft);
+  border-color: rgb(33 212 180 / 40%);
+}
+
+@media (min-width: 900px) {
+  .page {
+    max-width: 900px;
+  }
+
+  .prompt {
+    font-size: var(--text-4xl);
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "name": "@mapat/client",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "ממשק המשחק — מסך מנהל, מסך שחקן ומפה אינטראקטיבית",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -p tsconfig.json --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@mapat/shared": "*",
+    "framer-motion": "^11.11.9",
+    "qrcode": "^1.5.4",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "socket.io-client": "^4.8.1",
+    "zustand": "^5.0.1"
+  },
+  "devDependencies": {
+    "@types/qrcode": "^1.5.5",
+    "@types/react": "^18.3.11",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.3",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.10"
+  }
+}

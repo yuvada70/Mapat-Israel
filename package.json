@@ -1,0 +1,31 @@
+{
+  "name": "mapat-israel",
+  "version": "1.0.0",
+  "private": true,
+  "description": "מפת ישראל — משחק ניחוש מיקומים אינטראקטיבי מרובה משתתפים",
+  "type": "module",
+  "workspaces": [
+    "shared",
+    "server",
+    "client"
+  ],
+  "engines": {
+    "node": ">=20.11"
+  },
+  "scripts": {
+    "dev": "npm-run-all --parallel dev:server dev:client",
+    "dev:server": "npm run dev --workspace @mapat/server",
+    "dev:client": "npm run dev --workspace @mapat/client",
+    "build": "npm run build --workspace @mapat/shared && npm run build --workspace @mapat/client && npm run build --workspace @mapat/server",
+    "start": "npm run start --workspace @mapat/server",
+    "typecheck": "npm-run-all --serial typecheck:*",
+    "typecheck:shared": "npm run typecheck --workspace @mapat/shared",
+    "typecheck:server": "npm run build --workspace @mapat/shared && npm run typecheck --workspace @mapat/server",
+    "typecheck:client": "npm run typecheck --workspace @mapat/client",
+    "test": "npm run build --workspace @mapat/shared && npm run test --workspace @mapat/shared && npm run test --workspace @mapat/server"
+  },
+  "devDependencies": {
+    "npm-run-all": "^4.1.5",
+    "typescript": "^5.6.3"
+  }
+}
