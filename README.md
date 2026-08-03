@@ -235,6 +235,24 @@ npm run build
 NODE_ENV=production PORT=3000 PUBLIC_BASE_URL=https://example.com npm start
 ```
 
+### Railway
+
+הרפוזיטורי מוכן לפריסה ב-Railway ללא הגדרות ידניות. הקובץ
+`railway.json` מפנה ל-`Dockerfile` ומגדיר בדיקת תקינות מול `/healthz`.
+
+1. **New Project → Deploy from GitHub repo**, ובחרו את הרפוזיטורי.
+   Railway מזהה את `railway.json` ובונה מה-`Dockerfile`.
+2. **Settings → Networking → Generate Domain**. זהו — אין מה להגדיר עוד.
+
+**למה אין צורך להגדיר `PUBLIC_BASE_URL`:** Railway מזריק את
+`RAILWAY_PUBLIC_DOMAIN` לסביבת הריצה, והשרת בונה ממנו את כתובת
+הבסיס אוטומטית. זו ההגדרה הקריטית ביותר בפריסה — ממנה נבנה קוד
+ה-QR, וכתובת שגויה שוברת את המשחק בשקט מוחלט. אם אתם מחברים דומיין
+משלכם, הגדירו `PUBLIC_BASE_URL=https://your-domain.com` והיא תגבר.
+
+גם `PORT` מוזרק על ידי Railway והשרת מכבד אותו. WebSocket נתמך
+בפלטפורמה ללא הגדרה נוספת.
+
 ### Docker
 
 ```bash

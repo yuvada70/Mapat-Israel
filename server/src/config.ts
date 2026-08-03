@@ -55,19 +55,46 @@ function readBoolean(name: string, fallback: boolean): boolean {
   return raw === '1' || raw.toLowerCase() === 'true';
 }
 
+/**
+ * קובע את כתובת הבסיס הציבורית מתוך משתני הסביבה.
+ *
+ * זו ההגדרה הקריטית ביותר בפריסה: ממנה נבנים קישור ההצטרפות וקוד
+ * ה-QR. אם היא שגויה — הסריקה מהטלפון תוביל לשום מקום, והמשחק
+ * פשוט לא יעבוד, בלי הודעת שגיאה שתסביר למה.
+ *
+ * סדר העדיפויות:
+ *  1. PUBLIC_BASE_URL — הגדרה מפורשת, תמיד מנצחת.
+ *  2. RAILWAY_PUBLIC_DOMAIN — מוזרק אוטומטית על ידי Railway, ולכן
+ *     פריסה שם עובדת נכון ללא הגדרה ידנית כלל.
+ *  3. null — הכתובת תיגזר מכותרות הבקשה (פיתוח מקומי ורוב הפרוקסים).
+ *
+ * @throws {Error} כשהוגדרה כתובת שאינה חוקית — עדיף כשל מיידי
+ *                 בעלייה על משחק שבור בזמן אמת.
+ */
+function resolveConfiguredBaseUrl(): string | null {
+  const explicit = process.env['PUBLIC_BASE_URL']?.trim().replace(/\/+$/, '');
+  if (explicit) {
+    try {
+      new URL(explicit);
+    } catch {
+      throw new Error(`PUBLIC_BASE_URL אינו כתובת תקינה: "${explicit}"`);
+    }
+    return explicit;
+  }
+
+  // Railway מספק את הדומיין בלבד (ללא סכימה), ותמיד מגיש ב-HTTPS.
+  const railwayDomain = process.env['RAILWAY_PUBLIC_DOMAIN']?.trim().replace(/^https?:\/\//, '');
+  if (railwayDomain) return `https://${railwayDomain}`;
+
+  return null;
+}
+
 /** בונה את התצורה ממשתני הסביבה. נקרא פעם אחת בעליית התהליך. */
 export function loadConfig(): ServerConfig {
   const nodeEnv = (process.env['NODE_ENV'] ?? 'development') as ServerConfig['nodeEnv'];
   const originsRaw = process.env['CORS_ORIGINS']?.trim();
 
-  const publicBaseUrl = process.env['PUBLIC_BASE_URL']?.trim().replace(/\/+$/, '') || null;
-  if (publicBaseUrl !== null) {
-    try {
-      new URL(publicBaseUrl);
-    } catch {
-      throw new Error(`PUBLIC_BASE_URL אינו כתובת תקינה: "${publicBaseUrl}"`);
-    }
-  }
+  const publicBaseUrl = resolveConfiguredBaseUrl();
 
   return {
     port: readInt('PORT', 3000, 1, 65535),
