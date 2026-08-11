@@ -55,19 +55,56 @@ function readBoolean(name: string, fallback: boolean): boolean {
   return raw === '1' || raw.toLowerCase() === 'true';
 }
 
+/**
+ * קובע את כתובת הבסיס הציבורית מתוך משתני הסביבה.
+ *
+ * זו ההגדרה הקריטית ביותר בפריסה: ממנה נבנים קישור ההצטרפות וקוד
+ * ה-QR. אם היא שגויה — הסריקה מהטלפון תוביל לשום מקום, והמשחק
+ * פשוט לא יעבוד, בלי הודעת שגיאה שתסביר למה.
+ *
+ * סדר העדיפויות:
+ *  1. PUBLIC_BASE_URL — הגדרה מפורשת, תמיד מנצחת.
+ *  2. RENDER_EXTERNAL_URL — מוזרק אוטומטית על ידי Render (כתובת מלאה
+ *     כולל סכימה) לכל שירות web, ולכן פריסה שם עובדת נכון ללא הגדרה
+ *     ידנית כלל.
+ *  3. RAILWAY_PUBLIC_DOMAIN — מוזרק אוטומטית על ידי Railway (דומיין
+ *     בלבד, ללא סכימה), באותה רוח.
+ *  4. null — הכתובת תיגזר מכותרות הבקשה (פיתוח מקומי ורוב הפרוקסים).
+ *
+ * ערכים שמוזרקים אוטומטית על ידי הפלטפורמה (2–3) אינם מאומתים —
+ * אנו סומכים על הפלטפורמה שסיפקה אותם. רק הגדרה מפורשת (1) עוברת
+ * אימות ונכשלת מיד אם אינה תקינה, כי היא היחידה שהמשתמש הקליד ידנית.
+ *
+ * @throws {Error} כש-PUBLIC_BASE_URL הוגדר אך אינו כתובת חוקית —
+ *                 עדיף כשל מיידי בעלייה על משחק שבור בזמן אמת.
+ */
+function resolveConfiguredBaseUrl(): string | null {
+  const explicit = process.env['PUBLIC_BASE_URL']?.trim().replace(/\/+$/, '');
+  if (explicit) {
+    try {
+      new URL(explicit);
+    } catch {
+      throw new Error(`PUBLIC_BASE_URL אינו כתובת תקינה: "${explicit}"`);
+    }
+    return explicit;
+  }
+
+  const renderUrl = process.env['RENDER_EXTERNAL_URL']?.trim().replace(/\/+$/, '');
+  if (renderUrl) return renderUrl;
+
+  // Railway מספק את הדומיין בלבד (ללא סכימה), ותמיד מגיש ב-HTTPS.
+  const railwayDomain = process.env['RAILWAY_PUBLIC_DOMAIN']?.trim().replace(/^https?:\/\//, '');
+  if (railwayDomain) return `https://${railwayDomain}`;
+
+  return null;
+}
+
 /** בונה את התצורה ממשתני הסביבה. נקרא פעם אחת בעליית התהליך. */
 export function loadConfig(): ServerConfig {
   const nodeEnv = (process.env['NODE_ENV'] ?? 'development') as ServerConfig['nodeEnv'];
   const originsRaw = process.env['CORS_ORIGINS']?.trim();
 
-  const publicBaseUrl = process.env['PUBLIC_BASE_URL']?.trim().replace(/\/+$/, '') || null;
-  if (publicBaseUrl !== null) {
-    try {
-      new URL(publicBaseUrl);
-    } catch {
-      throw new Error(`PUBLIC_BASE_URL אינו כתובת תקינה: "${publicBaseUrl}"`);
-    }
-  }
+  const publicBaseUrl = resolveConfiguredBaseUrl();
 
   return {
     port: readInt('PORT', 3000, 1, 65535),
