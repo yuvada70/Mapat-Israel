@@ -13,6 +13,7 @@ import { loadConfig } from './config.js';
 /** משתני הסביבה שהבדיקות משנות; מאופסים אחרי כל בדיקה. */
 const MANAGED_KEYS = [
   'PUBLIC_BASE_URL',
+  'RENDER_EXTERNAL_URL',
   'RAILWAY_PUBLIC_DOMAIN',
   'PORT',
   'ROOM_TTL_MINUTES',
@@ -33,12 +34,30 @@ afterEach(() => {
 describe('כתובת הבסיס הציבורית', () => {
   it('נגזרת מהבקשה כשלא הוגדר דבר', () => {
     delete process.env['PUBLIC_BASE_URL'];
+    delete process.env['RENDER_EXTERNAL_URL'];
     delete process.env['RAILWAY_PUBLIC_DOMAIN'];
     assert.equal(loadConfig().publicBaseUrl, null);
   });
 
+  it('נבנית אוטומטית מהכתובת של Render', () => {
+    delete process.env['PUBLIC_BASE_URL'];
+    delete process.env['RAILWAY_PUBLIC_DOMAIN'];
+    process.env['RENDER_EXTERNAL_URL'] = 'https://mapat-israel.onrender.com';
+
+    assert.equal(loadConfig().publicBaseUrl, 'https://mapat-israel.onrender.com');
+  });
+
+  it('גוזרת קו נטוי עוקב מהכתובת של Render', () => {
+    delete process.env['PUBLIC_BASE_URL'];
+    delete process.env['RAILWAY_PUBLIC_DOMAIN'];
+    process.env['RENDER_EXTERNAL_URL'] = 'https://mapat-israel.onrender.com//';
+
+    assert.equal(loadConfig().publicBaseUrl, 'https://mapat-israel.onrender.com');
+  });
+
   it('נבנית אוטומטית מהדומיין של Railway', () => {
     delete process.env['PUBLIC_BASE_URL'];
+    delete process.env['RENDER_EXTERNAL_URL'];
     process.env['RAILWAY_PUBLIC_DOMAIN'] = 'mapat-israel-production.up.railway.app';
 
     assert.equal(loadConfig().publicBaseUrl, 'https://mapat-israel-production.up.railway.app');
@@ -46,20 +65,31 @@ describe('כתובת הבסיס הציבורית', () => {
 
   it('מתעלמת מסכימה כפולה בדומיין של Railway', () => {
     delete process.env['PUBLIC_BASE_URL'];
+    delete process.env['RENDER_EXTERNAL_URL'];
     process.env['RAILWAY_PUBLIC_DOMAIN'] = 'https://mapat.up.railway.app';
 
     assert.equal(loadConfig().publicBaseUrl, 'https://mapat.up.railway.app');
   });
 
-  it('הגדרה מפורשת גוברת על הדומיין של Railway', () => {
+  it('Render גובר על Railway כששניהם מוגדרים (מצב שלא אמור לקרות בפועל)', () => {
+    delete process.env['PUBLIC_BASE_URL'];
+    process.env['RENDER_EXTERNAL_URL'] = 'https://mapat-israel.onrender.com';
+    process.env['RAILWAY_PUBLIC_DOMAIN'] = 'mapat.up.railway.app';
+
+    assert.equal(loadConfig().publicBaseUrl, 'https://mapat-israel.onrender.com');
+  });
+
+  it('הגדרה מפורשת גוברת על Render ועל Railway', () => {
     process.env['PUBLIC_BASE_URL'] = 'https://mapat.example.com';
+    process.env['RENDER_EXTERNAL_URL'] = 'https://mapat-israel.onrender.com';
     process.env['RAILWAY_PUBLIC_DOMAIN'] = 'mapat.up.railway.app';
 
     assert.equal(loadConfig().publicBaseUrl, 'https://mapat.example.com');
   });
 
-  it('גוזרת קו נטוי עוקב', () => {
+  it('גוזרת קו נטוי עוקב מהגדרה מפורשת', () => {
     process.env['PUBLIC_BASE_URL'] = 'https://mapat.example.com//';
+    delete process.env['RENDER_EXTERNAL_URL'];
     delete process.env['RAILWAY_PUBLIC_DOMAIN'];
 
     assert.equal(loadConfig().publicBaseUrl, 'https://mapat.example.com');

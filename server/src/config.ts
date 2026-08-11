@@ -64,12 +64,19 @@ function readBoolean(name: string, fallback: boolean): boolean {
  *
  * סדר העדיפויות:
  *  1. PUBLIC_BASE_URL — הגדרה מפורשת, תמיד מנצחת.
- *  2. RAILWAY_PUBLIC_DOMAIN — מוזרק אוטומטית על ידי Railway, ולכן
- *     פריסה שם עובדת נכון ללא הגדרה ידנית כלל.
- *  3. null — הכתובת תיגזר מכותרות הבקשה (פיתוח מקומי ורוב הפרוקסים).
+ *  2. RENDER_EXTERNAL_URL — מוזרק אוטומטית על ידי Render (כתובת מלאה
+ *     כולל סכימה) לכל שירות web, ולכן פריסה שם עובדת נכון ללא הגדרה
+ *     ידנית כלל.
+ *  3. RAILWAY_PUBLIC_DOMAIN — מוזרק אוטומטית על ידי Railway (דומיין
+ *     בלבד, ללא סכימה), באותה רוח.
+ *  4. null — הכתובת תיגזר מכותרות הבקשה (פיתוח מקומי ורוב הפרוקסים).
  *
- * @throws {Error} כשהוגדרה כתובת שאינה חוקית — עדיף כשל מיידי
- *                 בעלייה על משחק שבור בזמן אמת.
+ * ערכים שמוזרקים אוטומטית על ידי הפלטפורמה (2–3) אינם מאומתים —
+ * אנו סומכים על הפלטפורמה שסיפקה אותם. רק הגדרה מפורשת (1) עוברת
+ * אימות ונכשלת מיד אם אינה תקינה, כי היא היחידה שהמשתמש הקליד ידנית.
+ *
+ * @throws {Error} כש-PUBLIC_BASE_URL הוגדר אך אינו כתובת חוקית —
+ *                 עדיף כשל מיידי בעלייה על משחק שבור בזמן אמת.
  */
 function resolveConfiguredBaseUrl(): string | null {
   const explicit = process.env['PUBLIC_BASE_URL']?.trim().replace(/\/+$/, '');
@@ -81,6 +88,9 @@ function resolveConfiguredBaseUrl(): string | null {
     }
     return explicit;
   }
+
+  const renderUrl = process.env['RENDER_EXTERNAL_URL']?.trim().replace(/\/+$/, '');
+  if (renderUrl) return renderUrl;
 
   // Railway מספק את הדומיין בלבד (ללא סכימה), ותמיד מגיש ב-HTTPS.
   const railwayDomain = process.env['RAILWAY_PUBLIC_DOMAIN']?.trim().replace(/^https?:\/\//, '');
