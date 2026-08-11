@@ -34,13 +34,13 @@ export interface QuestionPack {
 }
 
 /**
- * החבילה הראשית: 12 ערים ו-3 אתרים בישראל.
+ * החבילה הראשית: 16 ערים ויישובים ו-3 אתרים בישראל.
  * הקואורדינטות הן מרכז העיר / מוקד האתר לפי WGS84.
  */
 export const ISRAEL_CLASSIC_PACK: QuestionPack = {
   id: 'israel-classic',
   name: 'ערים ואתרים בישראל',
-  description: '12 ערים ו-3 אתרים מוכרים — החבילה הקלאסית',
+  description: '16 ערים ויישובים ו-3 אתרים מוכרים — החבילה הקלאסית',
   mapId: 'israel',
   locations: [
     {
@@ -126,6 +126,34 @@ export const ISRAEL_CLASSIC_PACK: QuestionPack = {
       kind: 'city',
       position: { lat: 31.0703, lng: 35.0333 },
       fact: 'עיר פיתוח בנגב המזרחי, בדרך לים המלח.',
+    },
+    {
+      id: 'eli',
+      name: 'עלי',
+      kind: 'city',
+      position: { lat: 32.07139, lng: 35.26528 },
+      fact: 'יישוב קהילתי בהרי בנימין, על כביש 60 בין שילה לצומת תפוח.',
+    },
+    {
+      id: 'hebron',
+      name: 'חברון',
+      kind: 'city',
+      position: { lat: 31.52528, lng: 35.10833 },
+      fact: 'העיר הגדולה בהרי חברון, ובה מערת המכפלה — מהאתרים המקודשים בעולם היהודי.',
+    },
+    {
+      id: 'sde-yitzhak',
+      name: 'שדה יצחק',
+      kind: 'city',
+      position: { lat: 32.40389, lng: 34.99444 },
+      fact: 'מושב בעמק חפר, מדרום-מזרח לחדרה.',
+    },
+    {
+      id: 'netiv-haasara',
+      name: 'נתיב העשרה',
+      kind: 'city',
+      position: { lat: 31.57083, lng: 34.53944 },
+      fact: 'מושב חופי על גבול רצועת עזה, הידוע גם בקיר הציורים הצבעוני לאורך הגדר.',
     },
     {
       id: 'ben-gurion-airport',
