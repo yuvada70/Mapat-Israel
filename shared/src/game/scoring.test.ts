@@ -88,18 +88,18 @@ describe('scoreGuess', () => {
 });
 
 describe('חבילת התוכן', () => {
-  it('כוללת 15 שאלות — 12 ערים ו-3 אתרים', () => {
+  it('כוללת 19 שאלות — 16 ערים ויישובים ו-3 אתרים', () => {
     const { locations } = ISRAEL_CLASSIC_PACK;
-    assert.equal(locations.length, 15);
-    assert.equal(locations.filter((l) => l.kind === 'city').length, 12);
+    assert.equal(locations.length, 19);
+    assert.equal(locations.filter((l) => l.kind === 'city').length, 16);
     assert.equal(locations.filter((l) => l.kind === 'landmark').length, 3);
   });
 
   it('לכל מיקום מזהה ייחודי ושם ייחודי', () => {
     const ids = new Set(ISRAEL_CLASSIC_PACK.locations.map((l) => l.id));
     const names = new Set(ISRAEL_CLASSIC_PACK.locations.map((l) => l.name));
-    assert.equal(ids.size, 15);
-    assert.equal(names.size, 15);
+    assert.equal(ids.size, 19);
+    assert.equal(names.size, 19);
   });
 
   it('כל המיקומים נופלים בתוך גבולות המפה', () => {
@@ -110,7 +110,39 @@ describe('חבילת התוכן', () => {
       );
     }
   });
+
+  it('כל המיקומים נופלים בתוך קו החוף המפושט, לא בים', () => {
+    // תיבה תוחמת אינה מספיקה למיקומים חופיים — בודקים הכלה אמיתית
+    // בתוך פוליגון היבשה (Ray Casting), כדי לתפוס מיקום שנופל בטעות
+    // בים בגלל פישוט קו החוף.
+    for (const location of ISRAEL_CLASSIC_PACK.locations) {
+      assert.ok(
+        isOnLand(location.position, ISRAEL_MAP.land),
+        `${location.name} נופל מחוץ ליבשה המפושטת`,
+      );
+    }
+  });
 });
+
+/** בדיקת הכלה בפוליגון בשיטת Ray Casting — משמשת רק לבדיקות. */
+function isOnLand(point: { lat: number; lng: number }, land: typeof ISRAEL_MAP.land): boolean {
+  for (const polygon of land) {
+    const [outerRing] = polygon;
+    if (outerRing && pointInRing(point.lng, point.lat, outerRing)) return true;
+  }
+  return false;
+}
+
+function pointInRing(x: number, y: number, ring: readonly (readonly [number, number])[]): boolean {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const a = ring[i]!;
+    const b = ring[j]!;
+    const intersects = a[1] > y !== b[1] > y && x < ((b[0] - a[0]) * (y - a[1])) / (b[1] - a[1]) + a[0];
+    if (intersects) inside = !inside;
+  }
+  return inside;
+}
 
 describe('היטל המפה', () => {
   const projection = createMercatorProjection(ISRAEL_MAP.bounds, { width: 1000, height: 1400 }, 24);

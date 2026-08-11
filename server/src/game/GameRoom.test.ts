@@ -357,7 +357,8 @@ describe('normalizeSettings', () => {
   });
 
   it('מגביל ערכים חורגים לטווח המותר', () => {
-    assert.equal(normalizeSettings({ roundCount: 9_999 }).roundCount, 15);
+    // המקסימום נגזר ממספר המיקומים בחבילה (19), לא מ-SETTINGS_LIMITS.max (30).
+    assert.equal(normalizeSettings({ roundCount: 9_999 }).roundCount, 19);
     assert.equal(normalizeSettings({ roundCount: -5 }).roundCount, 3);
     assert.equal(normalizeSettings({ roundDurationMs: 1 }).roundDurationMs, 3_000);
     assert.equal(normalizeSettings({ roundDurationMs: 10 ** 9 }).roundDurationMs, 30_000);
