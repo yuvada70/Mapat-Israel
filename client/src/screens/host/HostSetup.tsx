@@ -1,13 +1,13 @@
 /**
  * יצירת משחק חדש.
  *
- * ברירות המחדל מכוונות ל"התחל ולך" — 15 שאלות, 5 שניות לכל אחת —
- * וכל ההגדרות מקופלות מאחורי מתג אחד, כדי שמנהל שרוצה פשוט להתחיל
- * לא ייתקל בטופס.
+ * ברירת המחדל מכוונת ל"התחל ולך" — כל המיקומים שבחבילה הנבחרת,
+ * 5 שניות לכל שאלה — וכל ההגדרות מקופלות מאחורי מתג אחד, כדי שמנהל
+ * שרוצה פשוט להתחיל לא ייתקל בטופס.
  */
 
 import { useState } from 'react';
-import { DEFAULT_SETTINGS, listPacks, type GameSettings } from '@mapat/shared';
+import { DEFAULT_SETTINGS, listPacks, type GameSettings, type QuestionPack } from '@mapat/shared';
 
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/misc';
@@ -18,20 +18,43 @@ import styles from './HostSetup.module.css';
 /** אפשרויות משך סיבוב, בשניות. */
 const DURATION_OPTIONS = [3, 5, 8, 10, 15] as const;
 
-/** אפשרויות מספר שאלות. */
-const ROUND_OPTIONS = [5, 10, 15] as const;
+/** אפשרויות מספר שאלות קבועות — בנוסף לאפשרות "כל המיקומים" הדינמית. */
+const FIXED_ROUND_OPTIONS = [5, 10, 15] as const;
+
+const PACKS = listPacks();
+const DEFAULT_PACK = PACKS.find((pack) => pack.id === DEFAULT_SETTINGS.packId) ?? PACKS[0];
 
 export function HostSetup(): JSX.Element {
   const createGame = useGameStore((store) => store.createGame);
   const { navigate } = useRouter();
 
-  const [settings, setSettings] = useState<GameSettings>(DEFAULT_SETTINGS);
+  const [settings, setSettings] = useState<GameSettings>(() => ({
+    ...DEFAULT_SETTINGS,
+    roundCount: DEFAULT_PACK?.locations.length ?? DEFAULT_SETTINGS.roundCount,
+  }));
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [creating, setCreating] = useState(false);
 
-  const packs = listPacks();
+  const packs = PACKS;
+  const selectedPack = packs.find((pack) => pack.id === settings.packId) ?? packs[0];
+  const totalLocations = selectedPack?.locations.length ?? settings.roundCount;
+  const roundOptions = FIXED_ROUND_OPTIONS.filter((count) => count < totalLocations);
+
   const update = <K extends keyof GameSettings>(key: K, value: GameSettings[K]) =>
     setSettings((current) => ({ ...current, [key]: value }));
+
+  const selectPack = (pack: QuestionPack) =>
+    setSettings((current) => {
+      const currentPack = packs.find((p) => p.id === current.packId);
+      const wasAllLocations = currentPack ? current.roundCount >= currentPack.locations.length : false;
+      return {
+        ...current,
+        packId: pack.id,
+        roundCount: wasAllLocations
+          ? pack.locations.length
+          : Math.min(current.roundCount, pack.locations.length),
+      };
+    });
 
   const handleCreate = async () => {
     setCreating(true);
@@ -57,7 +80,7 @@ export function HostSetup(): JSX.Element {
               <button
                 key={pack.id}
                 className={`${styles.pack} ${settings.packId === pack.id ? styles.packActive : ''}`}
-                onClick={() => update('packId', pack.id)}
+                onClick={() => selectPack(pack)}
                 aria-pressed={settings.packId === pack.id}
               >
                 <span className={styles.packName}>{pack.name}</span>
@@ -71,7 +94,7 @@ export function HostSetup(): JSX.Element {
         <section className={styles.section}>
           <h2 className={styles.sectionTitle}>מספר שאלות</h2>
           <div className={styles.chips}>
-            {ROUND_OPTIONS.map((count) => (
+            {roundOptions.map((count) => (
               <button
                 key={count}
                 className={`${styles.chip} ${settings.roundCount === count ? styles.chipActive : ''}`}
@@ -81,6 +104,13 @@ export function HostSetup(): JSX.Element {
                 {count}
               </button>
             ))}
+            <button
+              className={`${styles.chip} ${settings.roundCount === totalLocations ? styles.chipActive : ''}`}
+              onClick={() => update('roundCount', totalLocations)}
+              aria-pressed={settings.roundCount === totalLocations}
+            >
+              כל המיקומים ({totalLocations})
+            </button>
           </div>
         </section>
 
