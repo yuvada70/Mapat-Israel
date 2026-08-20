@@ -44,7 +44,12 @@ export interface GameSettings {
   readonly speedBonus: boolean;
 }
 
-/** ערכי ברירת המחדל למשחק חדש — 15 שאלות, 5 שניות לכל אחת. */
+/**
+ * ערכי ברירת המחדל למשחק חדש — 5 שניות לכל שאלה.
+ * שדה roundCount כאן הוא ערך גיבוי בלבד; בפועל השרת (ר' normalizeSettings)
+ * וממסך יצירת המשחק קובעים ברירת מחדל דינמית השווה למספר כל המיקומים
+ * בחבילה שנבחרה, כדי שהמשחק תמיד ישחק בכל התוכן הקיים כברירת מחדל.
+ */
 export const DEFAULT_SETTINGS: GameSettings = {
   packId: 'israel-classic',
   roundCount: 15,

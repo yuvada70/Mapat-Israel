@@ -678,11 +678,14 @@ export function normalizeSettings(partial: Partial<GameSettings>): GameSettings 
 
   const pack = getPack(packId);
   const maxRounds = Math.min(SETTINGS_LIMITS.roundCount.max, pack.locations.length);
+  // ברירת המחדל היא כל המיקומים שבחבילה — לא מספר קבוע שעלול לפגר
+  // מאחורי תוכן שנוסף בעתיד.
+  const defaultRoundCount = maxRounds;
 
   return {
     packId,
     roundCount: clamp(
-      Math.round(Number(partial.roundCount ?? DEFAULT_SETTINGS.roundCount)) || DEFAULT_SETTINGS.roundCount,
+      Math.round(Number(partial.roundCount ?? defaultRoundCount)) || defaultRoundCount,
       SETTINGS_LIMITS.roundCount.min,
       maxRounds,
     ),

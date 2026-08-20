@@ -138,7 +138,7 @@ describe('מהלך המשחק', () => {
     const state = room.getPublicState();
     assert.equal(state.phase, 'question');
     assert.equal(state.round?.index, 0);
-    assert.equal(state.round?.total, 15);
+    assert.equal(state.round?.total, ISRAEL_CLASSIC_PACK.locations.length);
   });
 
   it('המצב הציבורי לעולם אינו מכיל את המיקום האמיתי', () => {
@@ -349,16 +349,18 @@ describe('שליטת המנהל', () => {
 });
 
 describe('normalizeSettings', () => {
-  it('משלים ברירות מחדל', () => {
+  const totalLocations = ISRAEL_CLASSIC_PACK.locations.length;
+
+  it('משלים ברירות מחדל — מספר הסיבובים הוא כל המיקומים בחבילה', () => {
     const settings = normalizeSettings({});
-    assert.equal(settings.roundCount, 15);
+    assert.equal(settings.roundCount, totalLocations);
     assert.equal(settings.roundDurationMs, 5_000);
     assert.equal(settings.packId, 'israel-classic');
   });
 
   it('מגביל ערכים חורגים לטווח המותר', () => {
-    // המקסימום נגזר ממספר המיקומים בחבילה (19), לא מ-SETTINGS_LIMITS.max (30).
-    assert.equal(normalizeSettings({ roundCount: 9_999 }).roundCount, 19);
+    // המקסימום נגזר ממספר המיקומים בחבילה, לא מ-SETTINGS_LIMITS.max (30).
+    assert.equal(normalizeSettings({ roundCount: 9_999 }).roundCount, totalLocations);
     assert.equal(normalizeSettings({ roundCount: -5 }).roundCount, 3);
     assert.equal(normalizeSettings({ roundDurationMs: 1 }).roundDurationMs, 3_000);
     assert.equal(normalizeSettings({ roundDurationMs: 10 ** 9 }).roundDurationMs, 30_000);
@@ -370,6 +372,6 @@ describe('normalizeSettings', () => {
 
   it('עמיד בפני קלט שאינו מספר', () => {
     const settings = normalizeSettings({ roundCount: 'הרבה' as unknown as number });
-    assert.equal(settings.roundCount, 15);
+    assert.equal(settings.roundCount, totalLocations);
   });
 });
