@@ -124,23 +124,3 @@
   inset: 0;
   pointer-events: none;
 }
-
-.hint {
-  position: absolute;
-  inset-block-end: var(--space-4);
-  inset-inline: 0;
-  display: flex;
-  justify-content: center;
-  pointer-events: none;
-}
-
-.hintText {
-  padding: var(--space-2) var(--space-4);
-  font-size: var(--text-sm);
-  font-weight: 600;
-  color: var(--color-text-muted);
-  background: rgb(7 12 23 / 78%);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-pill);
-  backdrop-filter: blur(8px);
-}

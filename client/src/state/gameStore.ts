@@ -330,6 +330,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
   /* ────────────────────────────── ממשק ────────────────────────────── */
 
   pushToast(level, message) {
+    // מונע ערימת הודעות זהות (למשל בקשות חוזרות שנדחות זו אחר זו) —
+    // אם ההודעה כבר מוצגת, לא מציגים עוד עותק ומשאירים את הקיימת.
+    if (get().toasts.some((toast) => toast.level === level && toast.message === message)) return;
+
     const toast: Toast = { id: (toastSequence += 1), level, message };
     set((current) => ({ toasts: [...current.toasts, toast] }));
 
