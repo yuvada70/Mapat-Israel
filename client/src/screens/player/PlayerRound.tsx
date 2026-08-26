@@ -19,6 +19,13 @@ import { useSound } from '../../hooks/useSound';
 import { selectMe, useGameStore } from '../../state/gameStore';
 import styles from './PlayerRound.module.css';
 
+/**
+ * מרווח מזערי בין שליחות ניחוש לשרת בזמן גרירה רציפה. הסימון המקומי
+ * מתעדכן על כל תזוזה לתגובתיות מיידית — רק שליחת הרשת ממוצעת, כדי
+ * שגרירה חלקה לא תציף עשרות בקשות בשנייה.
+ */
+const GUESS_THROTTLE_MS = 100;
+
 export function PlayerRound(): JSX.Element {
   const room = useGameStore((store) => store.room)!;
   const self = useGameStore((store) => store.self);
@@ -32,19 +39,50 @@ export function PlayerRound(): JSX.Element {
 
   const [pending, setPending] = useState<LatLng | null>(null);
 
-  /* איפוס הסימון המקומי בכל סיבוב חדש. */
+  /* מיתון שליחת הניחוש לרשת בזמן גרירה — ר' GUESS_THROTTLE_MS. */
+  const lastSentAtRef = useRef(0);
+  const latestPointRef = useRef<LatLng | null>(null);
+  const pendingSendRef = useRef<number | null>(null);
+
+  const clearPendingSend = useCallback(() => {
+    if (pendingSendRef.current !== null) {
+      window.clearTimeout(pendingSendRef.current);
+      pendingSendRef.current = null;
+    }
+  }, []);
+
+  /* איפוס הסימון המקומי בכל סיבוב חדש, וביטול שליחה ממתינה מהסיבוב הקודם. */
   useEffect(() => {
     setPending(null);
-  }, [round?.index]);
+    return clearPendingSend;
+  }, [round?.index, clearPendingSend]);
 
   const handlePick = useCallback(
     (point: LatLng) => {
       if (!isQuestion || isPaused) return;
 
       setPending(point);
-      void submitGuess(point);
+      latestPointRef.current = point;
+
+      const now = Date.now();
+      const elapsed = now - lastSentAtRef.current;
+
+      if (elapsed >= GUESS_THROTTLE_MS) {
+        clearPendingSend();
+        lastSentAtRef.current = now;
+        void submitGuess(point);
+        return;
+      }
+
+      if (pendingSendRef.current === null) {
+        pendingSendRef.current = window.setTimeout(() => {
+          pendingSendRef.current = null;
+          lastSentAtRef.current = Date.now();
+          if (latestPointRef.current) void submitGuess(latestPointRef.current);
+        }, GUESS_THROTTLE_MS - elapsed);
+      }
     },
-    [isPaused, isQuestion, submitGuess],
+    [clearPendingSend, isPaused, isQuestion, submitGuess],
   );
 
   /* משוב חושי בעת הסימון הראשון בסיבוב. */
@@ -120,13 +158,6 @@ export function PlayerRound(): JSX.Element {
           interactive={isQuestion && !isPaused}
           onPick={handlePick}
           selection={selection}
-          hint={
-            !isQuestion
-              ? undefined
-              : selection
-                ? 'אפשר לגרור כדי לדייק'
-                : 'הקישו על המפה כדי לסמן'
-          }
           ariaLabel={round ? `מפת ישראל — סמנו את המיקום של ${round.locationName}` : 'מפת ישראל'}
         />
 
@@ -143,7 +174,7 @@ export function PlayerRound(): JSX.Element {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
             >
-              ✓ הסימון נקלט — אפשר לשנות עד שהזמן ייגמר
+              ✓ נקלט — אפשר לגרור כדי לדייק
             </motion.div>
           ) : isQuestion ? (
             <motion.div
@@ -153,7 +184,7 @@ export function PlayerRound(): JSX.Element {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
             >
-              עדיין לא סימנתם
+              הקישו על המפה כדי לסמן
             </motion.div>
           ) : (
             <motion.div

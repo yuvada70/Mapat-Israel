@@ -57,8 +57,6 @@ export interface IsraelMapProps {
   readonly truth?: LatLng | null;
   /** קווי מרחק בין ניחושים לאמת. */
   readonly connectors?: readonly MapConnector[];
-  /** טקסט עזרה קצר בתחתית המפה. */
-  readonly hint?: string;
   readonly className?: string;
   /** תווית נגישות. */
   readonly ariaLabel?: string;
@@ -78,7 +76,6 @@ export function IsraelMap({
   markers = [],
   truth = null,
   connectors = [],
-  hint,
   className,
   ariaLabel = 'מפת ישראל',
 }: IsraelMapProps): JSX.Element {
@@ -223,12 +220,6 @@ export function IsraelMap({
               <circle cx={loupe.x} cy={loupe.y} r={4} fill="var(--color-primary)" stroke="#fff" strokeWidth={1} />
             </g>
           </svg>
-        </div>
-      ) : null}
-
-      {hint ? (
-        <div className={styles.hint}>
-          <span className={styles.hintText}>{hint}</span>
         </div>
       ) : null}
     </div>

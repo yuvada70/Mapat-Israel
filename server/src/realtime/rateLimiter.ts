@@ -25,8 +25,13 @@ export const RATE_LIMITS = {
   create: { capacity: 5, refillPerSecond: 0.1 },
   /** הצטרפות / חיבור מחדש. */
   join: { capacity: 10, refillPerSecond: 0.5 },
-  /** סימון נקודה — מותר לעדכן חופשית במהלך הסיבוב. */
-  guess: { capacity: 40, refillPerSecond: 8 },
+  /**
+   * סימון נקודה — מותר לעדכן חופשית במהלך הסיבוב, כולל גרירה רציפה
+   * לדיוק. הלקוח ממצע (throttle) את שליחות הגרירה לכ-10 לשנייה,
+   * ולכן הסף כאן גבוה פי שניים מכך בכוונה — כדי שגרירה רגילה, כולל
+   * פרצים קצרים (חיבור מחדש, קפיצת רשת), לעולם לא תיחסם.
+   */
+  guess: { capacity: 40, refillPerSecond: 20 },
   /** פקודות מנהל. */
   host: { capacity: 30, refillPerSecond: 4 },
 } as const satisfies Record<string, BucketConfig>;
