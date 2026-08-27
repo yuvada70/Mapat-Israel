@@ -6,6 +6,7 @@
  */
 
 import { motion } from 'framer-motion';
+import { CATEGORY_LABELS, DIFFICULTY_LABELS } from '@mapat/shared';
 
 import { Button } from '../../components/ui/Button';
 import { AvatarBadge, Card } from '../../components/ui/misc';
@@ -32,6 +33,11 @@ export function PlayerLobby(): JSX.Element {
         <div className={styles.status}>
           <span className={styles.pulse} aria-hidden="true" />
           מחכים שהמנהל יתחיל…
+        </div>
+
+        <div className={styles.meta}>
+          <span className={styles.metaBadge}>{CATEGORY_LABELS[room.settings.category]}</span>
+          <span className={styles.metaBadge}>{DIFFICULTY_LABELS[room.settings.difficulty]}</span>
         </div>
       </motion.div>
 

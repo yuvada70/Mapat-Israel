@@ -2,7 +2,12 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
 import { haversineDistanceKm } from '../geo/coordinates.js';
-import { ISRAEL_CLASSIC_PACK } from '../content/packs/index.js';
+import {
+  CONTENT_CATEGORIES,
+  DIFFICULTIES,
+  ISRAEL_CLASSIC_PACK,
+  selectLocationPool,
+} from '../content/packs/index.js';
 import { ISRAEL_MAP } from '../content/maps/index.js';
 import { isWithinBounds } from '../geo/coordinates.js';
 import { createMercatorProjection } from '../geo/projection.js';
@@ -88,18 +93,31 @@ describe('scoreGuess', () => {
 });
 
 describe('חבילת התוכן', () => {
-  it('כוללת 19 שאלות — 16 ערים ויישובים ו-3 אתרים', () => {
-    const { locations } = ISRAEL_CLASSIC_PACK;
-    assert.equal(locations.length, 19);
-    assert.equal(locations.filter((l) => l.kind === 'city').length, 16);
-    assert.equal(locations.filter((l) => l.kind === 'landmark').length, 3);
+  const { locations } = ISRAEL_CLASSIC_PACK;
+
+  it('כוללת ישובים ואתרים', () => {
+    assert.ok(locations.length > 0);
+    assert.ok(locations.filter((l) => l.category === 'settlement').length > 0);
+    assert.ok(locations.filter((l) => l.category === 'landmark').length > 0);
   });
 
   it('לכל מיקום מזהה ייחודי ושם ייחודי', () => {
-    const ids = new Set(ISRAEL_CLASSIC_PACK.locations.map((l) => l.id));
-    const names = new Set(ISRAEL_CLASSIC_PACK.locations.map((l) => l.name));
-    assert.equal(ids.size, 19);
-    assert.equal(names.size, 19);
+    const ids = new Set(locations.map((l) => l.id));
+    const names = new Set(locations.map((l) => l.name));
+    assert.equal(ids.size, locations.length);
+    assert.equal(names.size, locations.length);
+  });
+
+  it('לכל צירוף של קטגוריה × דרגת קושי יש מאגר מספק (לפחות 10 מיקומים)', () => {
+    for (const category of CONTENT_CATEGORIES) {
+      for (const difficulty of DIFFICULTIES) {
+        const pool = selectLocationPool(ISRAEL_CLASSIC_PACK, category, difficulty);
+        assert.ok(
+          pool.length >= 10,
+          `המאגר עבור קטגוריה="${category}" קושי="${difficulty}" קטן מדי (${pool.length})`,
+        );
+      }
+    }
   });
 
   it('כל המיקומים נופלים בתוך גבולות המפה', () => {
