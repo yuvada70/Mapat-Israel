@@ -7,7 +7,7 @@
  */
 
 import type { LatLng } from '../geo/coordinates.js';
-import type { GameLocation, LocationKind } from '../content/packs/index.js';
+import type { ContentCategory, Difficulty, GameLocation, LocationCategory } from '../content/packs/index.js';
 
 /** שלבי מכונת המצבים של המשחק. */
 export type GamePhase =
@@ -26,8 +26,12 @@ export type GamePhase =
 
 /** הגדרות משחק הנקבעות על ידי המנהל ביצירה. */
 export interface GameSettings {
-  /** מזהה חבילת התוכן (קטגוריה). */
+  /** מזהה חבילת התוכן. */
   readonly packId: string;
+  /** קטגוריית התוכן: ישובים, אתרים, או מעורב. */
+  readonly category: ContentCategory;
+  /** דרגת הקושי — קובעת מאיזה מאגר נשלפים המיקומים, אינה משפיעה על הניקוד. */
+  readonly difficulty: Difficulty;
   /** מספר הסיבובים במשחק. */
   readonly roundCount: number;
   /** משך סיבוב במילישניות. */
@@ -45,13 +49,16 @@ export interface GameSettings {
 }
 
 /**
- * ערכי ברירת המחדל למשחק חדש — 5 שניות לכל שאלה.
- * שדה roundCount כאן הוא ערך גיבוי בלבד; בפועל השרת (ר' normalizeSettings)
- * וממסך יצירת המשחק קובעים ברירת מחדל דינמית השווה למספר כל המיקומים
- * בחבילה שנבחרה, כדי שהמשחק תמיד ישחק בכל התוכן הקיים כברירת מחדל.
+ * ערכי ברירת המחדל למשחק חדש — ישובים בדרגת קושי בינונית, 5 שניות
+ * לכל שאלה. שדה roundCount כאן הוא ערך גיבוי בלבד; בפועל השרת (ר'
+ * normalizeSettings) וממסך יצירת המשחק קובעים ברירת מחדל דינמית
+ * השווה למספר כל המיקומים במאגר שנבחר (חבילה × קטגוריה × קושי), כדי
+ * שהמשחק תמיד ישחק בכל התוכן הזמין כברירת מחדל.
  */
 export const DEFAULT_SETTINGS: GameSettings = {
   packId: 'israel-classic',
+  category: 'settlement',
+  difficulty: 'medium',
   roundCount: 15,
   roundDurationMs: 5_000,
   intermissionMs: 2_000,
@@ -96,7 +103,7 @@ export interface RoundPrompt {
   readonly total: number;
   /** שם המקום שיש לאתר. */
   readonly locationName: string;
-  readonly kind: LocationKind;
+  readonly category: LocationCategory;
   /** חותמת זמן שרת שבה הסיבוב נפתח. */
   readonly startsAt: number;
   /** חותמת זמן שרת שבה הסיבוב נסגר. */

@@ -3,12 +3,46 @@
  *
  * חבילה = רשימת מיקומים המשויכת למפה. הוספת קטגוריה חדשה ("הרים",
  * "שמורות טבע", "ערי אירופה") היא הוספת רשומה כאן בלבד.
+ *
+ * בתוך חבילה, כל מיקום מתויג גם בסוג (ישוב/אתר) וגם בדרגת קושי
+ * (קל/בינוני/מקצוענים). המנהל בוחר בעת יצירת המשחק אילו מיקומים
+ * ישתתפו — סינון לפי הצירוף הזה, ר' {@link selectLocationPool}.
  */
 
 import type { LatLng } from '../../geo/coordinates.js';
+import { ISRAEL_LOCATIONS } from './israel-locations.js';
 
-/** סוג המיקום — משמש לאייקון ולסינון עתידי לפי קטגוריות משנה. */
-export type LocationKind = 'city' | 'landmark';
+/** סוג המיקום: ישוב (עיר/עיירה/מושב/קיבוץ) או אתר לאומי/מוכר. */
+export type LocationCategory = 'settlement' | 'landmark';
+
+/**
+ * קטגוריית התוכן שהמנהל בוחר — סוג מיקום ספציפי, או "מעורב" ששולף
+ * משני הסוגים גם יחד.
+ */
+export type ContentCategory = LocationCategory | 'mixed';
+
+/** דרגת קושי — קובעת מאיזה מאגר נשלף המיקום, ואינה משפיעה על הניקוד. */
+export type Difficulty = 'easy' | 'medium' | 'pro';
+
+/** כל קטגוריות התוכן האפשריות, לבדיקת תקינות ולבניית בוררים. */
+export const CONTENT_CATEGORIES: readonly ContentCategory[] = ['settlement', 'landmark', 'mixed'];
+
+/** כל דרגות הקושי האפשריות, לבדיקת תקינות ולבניית בוררים. */
+export const DIFFICULTIES: readonly Difficulty[] = ['easy', 'medium', 'pro'];
+
+/** תוויות תצוגה בעברית לקטגוריית תוכן. */
+export const CATEGORY_LABELS: Readonly<Record<ContentCategory, string>> = {
+  settlement: 'ישובים',
+  landmark: 'אתרים לאומיים ומוכרים',
+  mixed: 'מעורב',
+};
+
+/** תוויות תצוגה בעברית לדרגת קושי. */
+export const DIFFICULTY_LABELS: Readonly<Record<Difficulty, string>> = {
+  easy: 'קל',
+  medium: 'בינוני',
+  pro: 'מקצוענים',
+};
 
 /** מיקום שניתן לשאול עליו. */
 export interface GameLocation {
@@ -16,7 +50,9 @@ export interface GameLocation {
   readonly id: string;
   /** שם התצוגה שמוצג לשחקנים. */
   readonly name: string;
-  readonly kind: LocationKind;
+  readonly category: LocationCategory;
+  /** דרגת הקושי שבה המיקום נכלל במאגר. */
+  readonly difficulty: Difficulty;
   /** המיקום האמיתי (WGS84). */
   readonly position: LatLng;
   /** עובדה קצרה המוצגת במסך הסיכום — מוסיפה ערך חינוכי. */
@@ -34,149 +70,15 @@ export interface QuestionPack {
 }
 
 /**
- * החבילה הראשית: 16 ערים ויישובים ו-3 אתרים בישראל.
+ * החבילה הראשית: ישובים ואתרים לאומיים בישראל, בשלוש דרגות קושי.
  * הקואורדינטות הן מרכז העיר / מוקד האתר לפי WGS84.
  */
 export const ISRAEL_CLASSIC_PACK: QuestionPack = {
   id: 'israel-classic',
   name: 'ערים ואתרים בישראל',
-  description: '16 ערים ויישובים ו-3 אתרים מוכרים — החבילה הקלאסית',
+  description: 'ישובים ואתרים לאומיים ברחבי הארץ, בשלוש דרגות קושי',
   mapId: 'israel',
-  locations: [
-    {
-      id: 'jerusalem',
-      name: 'ירושלים',
-      kind: 'city',
-      position: { lat: 31.7683, lng: 35.2137 },
-      fact: 'העיר הגדולה בישראל בשטח ובאוכלוסייה, ויושבת על קו פרשת המים ההררי.',
-    },
-    {
-      id: 'tel-aviv',
-      name: 'תל אביב',
-      kind: 'city',
-      position: { lat: 32.0853, lng: 34.7818 },
-      fact: 'נוסדה ב-1909 כשכונה צפונית ליפו, והיום מרכז כלכלי על חוף הים התיכון.',
-    },
-    {
-      id: 'haifa',
-      name: 'חיפה',
-      kind: 'city',
-      position: { lat: 32.794, lng: 34.9896 },
-      fact: 'נבנתה על מדרונות הכרמל, ובה נמל הים הגדול בישראל.',
-    },
-    {
-      id: 'beer-sheva',
-      name: 'באר שבע',
-      kind: 'city',
-      position: { lat: 31.253, lng: 34.7915 },
-      fact: 'בירת הנגב, בצומת הדרכים המרכזי של דרום הארץ.',
-    },
-    {
-      id: 'eilat',
-      name: 'אילת',
-      kind: 'city',
-      position: { lat: 29.5577, lng: 34.9519 },
-      fact: 'העיר הדרומית ביותר בישראל, על חופו של ים סוף.',
-    },
-    {
-      id: 'ashdod',
-      name: 'אשדוד',
-      kind: 'city',
-      position: { lat: 31.8014, lng: 34.6553 },
-      fact: 'עיר נמל על חוף הים התיכון, כ-30 ק"מ דרומית לתל אביב.',
-    },
-    {
-      id: 'netanya',
-      name: 'נתניה',
-      kind: 'city',
-      position: { lat: 32.3215, lng: 34.8532 },
-      fact: 'שוכנת במרכז מישור החוף, על מצוק הכורכר שמעל הים.',
-    },
-    {
-      id: 'modiin',
-      name: 'מודיעין',
-      kind: 'city',
-      position: { lat: 31.8928, lng: 35.0104 },
-      fact: 'עיר מתוכננת בשפלה, בדיוק באמצע הדרך בין תל אביב לירושלים.',
-    },
-    {
-      id: 'afula',
-      name: 'עפולה',
-      kind: 'city',
-      position: { lat: 32.6078, lng: 35.2897 },
-      fact: 'ליבו של עמק יזרעאל, ומכונה "בירת העמק".',
-    },
-    {
-      id: 'tiberias',
-      name: 'טבריה',
-      kind: 'city',
-      position: { lat: 32.7922, lng: 35.5312 },
-      fact: 'יושבת על חופה המערבי של הכנרת, כ-200 מטר מתחת לפני הים.',
-    },
-    {
-      id: 'safed',
-      name: 'צפת',
-      kind: 'city',
-      position: { lat: 32.965, lng: 35.4951 },
-      fact: 'העיר הגבוהה בישראל, בהרי הגליל העליון.',
-    },
-    {
-      id: 'dimona',
-      name: 'דימונה',
-      kind: 'city',
-      position: { lat: 31.0703, lng: 35.0333 },
-      fact: 'עיר פיתוח בנגב המזרחי, בדרך לים המלח.',
-    },
-    {
-      id: 'eli',
-      name: 'עלי',
-      kind: 'city',
-      position: { lat: 32.07139, lng: 35.26528 },
-      fact: 'יישוב קהילתי בהרי בנימין, על כביש 60 בין שילה לצומת תפוח.',
-    },
-    {
-      id: 'hebron',
-      name: 'חברון',
-      kind: 'city',
-      position: { lat: 31.52528, lng: 35.10833 },
-      fact: 'העיר הגדולה בהרי חברון, ובה מערת המכפלה — מהאתרים המקודשים בעולם היהודי.',
-    },
-    {
-      id: 'sde-yitzhak',
-      name: 'שדה יצחק',
-      kind: 'city',
-      position: { lat: 32.40389, lng: 34.99444 },
-      fact: 'מושב בעמק חפר, מדרום-מזרח לחדרה.',
-    },
-    {
-      id: 'netiv-haasara',
-      name: 'נתיב העשרה',
-      kind: 'city',
-      position: { lat: 31.57083, lng: 34.53944 },
-      fact: 'מושב חופי על גבול רצועת עזה, הידוע גם בקיר הציורים הצבעוני לאורך הגדר.',
-    },
-    {
-      id: 'ben-gurion-airport',
-      name: 'נמל התעופה בן-גוריון',
-      kind: 'landmark',
-      position: { lat: 32.0055, lng: 34.8854 },
-      fact: 'שדה התעופה הבינלאומי הראשי של ישראל, סמוך ללוד.',
-    },
-    {
-      id: 'masada',
-      name: 'מצדה',
-      kind: 'landmark',
-      position: { lat: 31.3156, lng: 35.3536 },
-      fact: 'מבצר הרודיאני על צוק במדבר יהודה, מעל חופו המערבי של ים המלח.',
-    },
-    {
-      id: 'mount-hermon',
-      name: 'החרמון',
-      kind: 'landmark',
-      position: { lat: 33.305, lng: 35.785 },
-      fact: 'הנקודה הגבוהה בשליטת ישראל, בקצה הצפוני של הארץ.',
-    },
-  ],
+  locations: ISRAEL_LOCATIONS,
 };
 
 /** כל חבילות התוכן הזמינות, לפי מזהה. */
@@ -199,4 +101,20 @@ export function getPack(packId: string): QuestionPack {
 /** רשימת החבילות לתצוגה במסך יצירת המשחק. */
 export function listPacks(): readonly QuestionPack[] {
   return Object.values(PACKS);
+}
+
+/**
+ * מסנן את מיקומי החבילה לפי קטגוריית תוכן ודרגת קושי — זהו מאגר
+ * השאלות שממנו נבחר המשחק בפועל. "מעורב" מחזיר גם ישובים וגם אתרים
+ * מאותה דרגת קושי.
+ */
+export function selectLocationPool(
+  pack: QuestionPack,
+  category: ContentCategory,
+  difficulty: Difficulty,
+): readonly GameLocation[] {
+  return pack.locations.filter(
+    (location) =>
+      location.difficulty === difficulty && (category === 'mixed' || location.category === category),
+  );
 }

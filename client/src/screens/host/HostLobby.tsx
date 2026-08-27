@@ -8,6 +8,7 @@
 
 import { useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { CATEGORY_LABELS, DIFFICULTY_LABELS } from '@mapat/shared';
 
 import { Button } from '../../components/ui/Button';
 import { JoinQrCode } from '../../components/ui/JoinQrCode';
@@ -88,7 +89,7 @@ export function HostLobby(): JSX.Element {
             <p className={styles.playersHint}>
               {playerCount === 0
                 ? 'ממתינים למשתתפים הראשונים…'
-                : `${room.settings.roundCount} שאלות · ${room.settings.roundDurationMs / 1000} שניות לכל אחת`}
+                : `${CATEGORY_LABELS[room.settings.category]} · ${DIFFICULTY_LABELS[room.settings.difficulty]} · ${room.settings.roundCount} שאלות · ${room.settings.roundDurationMs / 1000} שניות לכל אחת`}
             </p>
           </div>
 

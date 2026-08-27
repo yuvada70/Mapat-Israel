@@ -8,7 +8,14 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { ISRAEL_CLASSIC_PACK } from '@mapat/shared';
+import { DEFAULT_SETTINGS, ISRAEL_CLASSIC_PACK, selectLocationPool } from '@mapat/shared';
+
+/** מאגר ברירת המחדל (ישובים × בינוני) — בסיס להשוואה בבדיקות. */
+const DEFAULT_POOL_SIZE = selectLocationPool(
+  ISRAEL_CLASSIC_PACK,
+  DEFAULT_SETTINGS.category,
+  DEFAULT_SETTINGS.difficulty,
+).length;
 
 import { GameError, GameRoom, normalizeSettings, type RoomListeners, type Scheduler } from './GameRoom.js';
 
@@ -138,7 +145,7 @@ describe('מהלך המשחק', () => {
     const state = room.getPublicState();
     assert.equal(state.phase, 'question');
     assert.equal(state.round?.index, 0);
-    assert.equal(state.round?.total, ISRAEL_CLASSIC_PACK.locations.length);
+    assert.equal(state.round?.total, DEFAULT_POOL_SIZE);
   });
 
   it('המצב הציבורי לעולם אינו מכיל את המיקום האמיתי', () => {
@@ -349,18 +356,18 @@ describe('שליטת המנהל', () => {
 });
 
 describe('normalizeSettings', () => {
-  const totalLocations = ISRAEL_CLASSIC_PACK.locations.length;
-
-  it('משלים ברירות מחדל — מספר הסיבובים הוא כל המיקומים בחבילה', () => {
+  it('משלים ברירות מחדל — מספר הסיבובים הוא כל מיקומי המאגר (ישובים × בינוני)', () => {
     const settings = normalizeSettings({});
-    assert.equal(settings.roundCount, totalLocations);
+    assert.equal(settings.roundCount, DEFAULT_POOL_SIZE);
     assert.equal(settings.roundDurationMs, 5_000);
     assert.equal(settings.packId, 'israel-classic');
+    assert.equal(settings.category, 'settlement');
+    assert.equal(settings.difficulty, 'medium');
   });
 
   it('מגביל ערכים חורגים לטווח המותר', () => {
-    // המקסימום נגזר ממספר המיקומים בחבילה, לא מ-SETTINGS_LIMITS.max (30).
-    assert.equal(normalizeSettings({ roundCount: 9_999 }).roundCount, totalLocations);
+    // המקסימום נגזר ממספר המיקומים במאגר שנבחר, לא מ-SETTINGS_LIMITS.max (30).
+    assert.equal(normalizeSettings({ roundCount: 9_999 }).roundCount, DEFAULT_POOL_SIZE);
     assert.equal(normalizeSettings({ roundCount: -5 }).roundCount, 3);
     assert.equal(normalizeSettings({ roundDurationMs: 1 }).roundDurationMs, 3_000);
     assert.equal(normalizeSettings({ roundDurationMs: 10 ** 9 }).roundDurationMs, 30_000);
@@ -370,8 +377,30 @@ describe('normalizeSettings', () => {
     assert.equal(normalizeSettings({ packId: '../../etc/passwd' }).packId, 'israel-classic');
   });
 
+  it('מתעלם מקטגוריה ומדרגת קושי לא מוכרות', () => {
+    const settings = normalizeSettings({
+      category: 'not-a-category' as never,
+      difficulty: 'not-a-difficulty' as never,
+    });
+    assert.equal(settings.category, 'settlement');
+    assert.equal(settings.difficulty, 'medium');
+  });
+
+  it('שולף מאגר שונה לפי קטגוריה וקושי', () => {
+    const mixedPro = normalizeSettings({ category: 'mixed', difficulty: 'pro' });
+    const settlementEasy = normalizeSettings({ category: 'settlement', difficulty: 'easy' });
+    assert.equal(
+      mixedPro.roundCount,
+      selectLocationPool(ISRAEL_CLASSIC_PACK, 'mixed', 'pro').length,
+    );
+    assert.equal(
+      settlementEasy.roundCount,
+      selectLocationPool(ISRAEL_CLASSIC_PACK, 'settlement', 'easy').length,
+    );
+  });
+
   it('עמיד בפני קלט שאינו מספר', () => {
     const settings = normalizeSettings({ roundCount: 'הרבה' as unknown as number });
-    assert.equal(settings.roundCount, totalLocations);
+    assert.equal(settings.roundCount, DEFAULT_POOL_SIZE);
   });
 });

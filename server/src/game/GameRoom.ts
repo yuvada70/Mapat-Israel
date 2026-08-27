@@ -13,8 +13,10 @@
 import { randomUUID } from 'node:crypto';
 
 import {
+  CONTENT_CATEGORIES,
   DEFAULT_SCORING,
   DEFAULT_SETTINGS,
+  DIFFICULTIES,
   MAX_PLAYERS_PER_ROOM,
   NO_ANSWER_SCORE,
   SETTINGS_LIMITS,
@@ -28,6 +30,9 @@ import {
   roundLatLng,
   sanitizePlayerName,
   scoreGuess,
+  selectLocationPool,
+  type ContentCategory,
+  type Difficulty,
   type ErrorCode,
   type GameLocation,
   type GameResults,
@@ -593,7 +598,7 @@ export class GameRoom {
       index: this.currentRoundIndex,
       total: this.questions.length,
       locationName: location.name,
-      kind: location.kind,
+      category: location.category,
       startsAt: this.roundStartsAt,
       endsAt: this.roundEndsAt,
     };
@@ -676,14 +681,20 @@ export function normalizeSettings(partial: Partial<GameSettings>): GameSettings 
     ? partial.packId
     : DEFAULT_SETTINGS.packId;
 
+  const category = isValidCategory(partial.category) ? partial.category : DEFAULT_SETTINGS.category;
+  const difficulty = isValidDifficulty(partial.difficulty) ? partial.difficulty : DEFAULT_SETTINGS.difficulty;
+
   const pack = getPack(packId);
-  const maxRounds = Math.min(SETTINGS_LIMITS.roundCount.max, pack.locations.length);
-  // ברירת המחדל היא כל המיקומים שבחבילה — לא מספר קבוע שעלול לפגר
-  // מאחורי תוכן שנוסף בעתיד.
+  const pool = selectLocationPool(pack, category, difficulty);
+  const maxRounds = Math.min(SETTINGS_LIMITS.roundCount.max, pool.length);
+  // ברירת המחדל היא כל המיקומים שבמאגר שנבחר — לא מספר קבוע שעלול
+  // לפגר מאחורי תוכן שנוסף בעתיד.
   const defaultRoundCount = maxRounds;
 
   return {
     packId,
+    category,
+    difficulty,
     roundCount: clamp(
       Math.round(Number(partial.roundCount ?? defaultRoundCount)) || defaultRoundCount,
       SETTINGS_LIMITS.roundCount.min,
@@ -720,9 +731,18 @@ function isKnownPack(packId: string): boolean {
   }
 }
 
+function isValidCategory(value: unknown): value is ContentCategory {
+  return typeof value === 'string' && (CONTENT_CATEGORIES as readonly string[]).includes(value);
+}
+
+function isValidDifficulty(value: unknown): value is Difficulty {
+  return typeof value === 'string' && (DIFFICULTIES as readonly string[]).includes(value);
+}
+
 /** בוחר את שאלות המשחק לפי ההגדרות (ערבוב Fisher–Yates אם התבקש). */
 function selectQuestions(settings: GameSettings): readonly GameLocation[] {
-  const all = [...getPack(settings.packId).locations];
+  const pack = getPack(settings.packId);
+  const all = [...selectLocationPool(pack, settings.category, settings.difficulty)];
 
   if (settings.shuffleQuestions) {
     for (let i = all.length - 1; i > 0; i -= 1) {
